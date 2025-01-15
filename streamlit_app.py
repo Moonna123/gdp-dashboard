@@ -1,17 +1,36 @@
 import firebase_admin
-from firebase_admin import credentials, db
+from firebase_admin import credentials, db, auth
 import streamlit as st
-import json
 
-# Initialize Firebase only if not already initialized
+
+# Initialize Firebase Admin SDK only if not already initialized
 if not firebase_admin._apps:
-    cred = credentials.Certificate('/workspaces/cloud-health-form/firebase_credentials.json')
+    cred = credentials.Certificate('/workspaces/gdp-dashboard/cloud-project-e22b5-firebase-adminsdk-d4sdc-9fcb9ef892.json')
     firebase_admin.initialize_app(cred, {
-        'databaseURL': 'https://<your-firebase-project-id>.firebaseio.com'
+        'databaseURL': 'https://cloud-project-e22b5-default-rtdb.asia-southeast1.firebasedatabase.app/'
     })
 
-# Firebase Realtime Database initialization
+# Access the database
 ref = db.reference('appointments')
+
+
+# Firebase Authentication
+web_api_key = "AIzaSyAFnX93fKXWLyH1sZ4loXu1-we28PrJcs0"
+email = "moonnazole@gmail.com"
+password = "12345678"
+
+try:
+    # Check if the user exists or create a new user
+    user = auth.get_user_by_email(email)
+    st.write(f"Authenticated as {user.email}")
+except auth.UserNotFoundError:
+    user = auth.create_user(
+        email=email,
+        email_verified=False,
+        password=password,
+        display_name="Moon Nazole",
+    )
+    st.write(f"New user created: {user.email}")
 
 # Create the Streamlit form
 st.title("Health Appointment Booking")
@@ -40,14 +59,16 @@ if submitted:
     }
     
     # Store the data in Firebase Realtime Database
-    ref.push(data)
-
-    st.success("Appointment booked successfully!")
-    st.write("### Appointment Receipt")
-    st.write(f"**Name:** {name}")
-    st.write(f"**Birthdate:** {birthdate}")
-    st.write(f"**Phone Number:** {phone}")
-    st.write(f"**IC:** {ic}")
-    st.write(f"**Clinic:** {clinic}")
-    st.write(f"**Date:** {date}")
-    st.write(f"**Time:** {time}")
+    try:
+        ref.push(data)
+        st.success("Appointment booked successfully!")
+        st.write("### Appointment Receipt")
+        st.write(f"*Name:* {name}")
+        st.write(f"*Birthdate:* {birthdate}")
+        st.write(f"*Phone Number:* {phone}")
+        st.write(f"*IC:* {ic}")
+        st.write(f"*Clinic:* {clinic}")
+        st.write(f"*Date:* {date}")
+        st.write(f"*Time:* {time}")
+    except Exception as e:
+        st.error(f"Failed to save appointment: {e}")
